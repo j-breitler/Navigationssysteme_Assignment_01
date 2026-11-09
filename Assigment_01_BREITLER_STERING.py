@@ -33,17 +33,18 @@ oneway_limit = 1000
 earth_radius = 6371.0
 
 
-"""
-Since Python indexing starts at 0,
-but the data starts at index 1
-we create a placehodler for index 0.
-"""
+
 
 # ----------------------------------------------------------------------
 # Load the coordinates
 # ----------------------------------------------------------------------
 
 # list for the coordinates, with a placeholder for index 0
+"""
+Since Python indexing starts at 0,
+but the data starts at index 1
+we create a placehodler for index 0.
+"""
 coordinates = [None]
 
 # open the nodepl file
@@ -55,11 +56,6 @@ with open (nodepl_file) as nodepl:
         coordinates.append((lat,lon)) # append the coordiantes as a tuple (the coordinate pairs belong together and should not change)
 
 number_of_nodes = len(coordinates) - 1
-
-print(f'The first coordinate is {coordinates[1]}')
-print(f'The second coordinate is {coordinates[2]}')
-print(f'The number of nodes is {number_of_nodes}')
-
 
 # ----------------------------------------------------------------------
 # Load the nodelist
@@ -73,10 +69,6 @@ with open (nodelist_file) as nodelist:
     for line in nodelist:
         nodes = int(line)
         first_arc.append(nodes)
-
-print(f'The arcs of node 1 start in row {first_arc[1]}')
-print(f'The arcs of node 2 start in row {first_arc[2]}')
-print(f'The length of nodelist is {len(first_arc)}')
 
 """
 The arcs of node i are in the rows first_arc[i] until first_arc[i+1] - 1.
@@ -103,23 +95,39 @@ with open (arclist_file) as arcs_list:
         flags = int(columns[5])
         arcs.append((destination, travel_time, length, speed_limit, clazz, flags)) # append the arc as a tuple (the values belong together and should not change)
 
-print(f'The first arc is {arcs[1]}')
-print(f'The second arc is {arcs[2]}')
-print(f'The number of arcs is {len(arcs) - 1}')
-
-
 # ----------------------------------------------------------------------
 # Functions
 # ----------------------------------------------------------------------
 
 def haversine(point_1, point_2):
-    """distance in km between two (lat, lon) tuples on the earth"""
-    lat_1, lon_1 = map(math.radians, point_1)
-    lat_2, lon_2 = map(math.radians, point_2)
+    """distance in km between two (lat, lon) tuples on the earth (Sphärischer Cosinussatz für Seiten)"""
+    # unpack the tuples
+    lat_1, lon_1 = point_1
+    lat_2, lon_2 = point_2
+
+    # degrees -> radians (sin and cos in Python need radians)
+    lat_1 = lat_1 * math.pi / 180
+    lon_1 = lon_1 * math.pi / 180
+
+    lat_2 = lat_2 * math.pi / 180
+    lon_2 = lon_2 * math.pi / 180
+
+    # differences
     d_lat = lat_2 - lat_1
     d_lon = lon_2 - lon_1
-    a = math.sin(d_lat / 2) ** 2 + math.cos(lat_1) * math.cos(lat_2) * math.sin(d_lon / 2) ** 2
-    return 2 * earth_radius * math.asin(math.sqrt(a))
+
+    # haversine formula, split into small pieces
+    sin_lat = math.sin(d_lat / 2)
+    sin_lon = math.sin(d_lon / 2)
+    a = sin_lat * sin_lat + math.cos(lat_1) * math.cos(lat_2) * sin_lon * sin_lon
+
+    # central angle (in radians)
+    c = 2 * math.asin(math.sqrt(a))
+
+    # angle * earth radius = distance in km
+    distance = earth_radius * c
+    return distance
+
 
 
 def outgoing_arcs(node):
@@ -131,14 +139,17 @@ def routing(start, goal, cost_type="time", a_star=False):
     """
     Dijkstra (a_star=False) or A* (a_star=True) from start to goal.
     cost_type: "time" -> column travel_time, "distance" -> column length
-
     Dijkstra: always continue with the open node with the smallest cost.
+    
     A*: always continue with the open node with the smallest cost + heuristic.
         The heuristic is the straight-line distance to the goal. A road can
         never be shorter than the straight line, so A* still finds the
         optimal route (only valid for cost_type = "distance").
     """
-    cost_index = 1 if cost_type == "time" else 2   # position in the arc tuple
+    if cost_type == "time":
+      cost_index = 1      # travel time [h]
+    else:
+      cost_index = 2      # length [km]
 
     cost = [math.inf] * (number_of_nodes + 1)       # best cost from start
     predecessor = [0] * (number_of_nodes + 1)       # where did we come from? (0 = none)
@@ -202,12 +213,19 @@ def path_time_and_distance(path):
     """add up time (h) and distance (km) of all arcs along the path"""
     total_time = 0
     total_distance = 0
-    for node_from, node_to in zip(path[:-1], path[1:]):
+
+    # go through the path in pairs: (node 0, node 1), (node 1, node 2), ...
+    for i in range(len(path) - 1):
+        node_from = path[i]
+        node_to = path[i + 1]
+
+        # find the arc from node_from to node_to
         for arc in outgoing_arcs(node_from):
             if arc[0] == node_to:
-                total_time += arc[1]
-                total_distance += arc[2]
+                total_time = total_time + arc[1]
+                total_distance = total_distance + arc[2]
                 break
+
     return total_time, total_distance
 
 
@@ -230,7 +248,12 @@ def plot_streets():
 
 
 def plot_path(path, color, style, label):
-    lats, lons = zip(*[coordinates[node] for node in path])
+    lats = []
+    lons = []
+    for node in path:
+        lat, lon = coordinates[node]
+        lats.append(lat)
+        lons.append(lon)
     plt.plot(lons, lats, color=color, linestyle=style, linewidth=2, label=label)
 
 
@@ -255,12 +278,20 @@ def finish_plot(title):
     plt.legend(loc="upper left", fontsize=8)
 
 
-# ----------------------------------------------------------------------
-# Find the start node (node closest to home)
-# ----------------------------------------------------------------------
+  # ----------------------------------------------------------------------
+  # Find the start node (node closest to home)
+  # ----------------------------------------------------------------------
 
-start = min(range(1, number_of_nodes + 1), key=lambda node: haversine(home, coordinates[node]))
-start_distance = haversine(home, coordinates[start])
+start = 0                     # best node found so far (0 = none yet)
+start_distance = math.inf     # its distance to home (infinitely far at the beginning)
+
+for node in range(1, number_of_nodes + 1):
+    distance = haversine(home, coordinates[node])
+
+    # closer than the best one so far? -> remember this node
+    if distance < start_distance:
+        start_distance = distance
+        start = node
 
 print(f'\nStart node: {start} ({start_distance * 1000:.0f} m from home)')
 
@@ -275,8 +306,10 @@ plt.figure(figsize=(10, 9))
 plot_streets()
 
 for name, goal in targets.items():
-    pre_time, cost_time, visited_time = routing(start, goal, "time")
-    pre_dist, cost_dist, visited_dist = routing(start, goal, "distance")
+
+    # Dijkstra, once optimised for time and once for distance
+    pre_time, cost_time, visited_time = routing(start, goal, cost_type="time", a_star=False)
+    pre_dist, cost_dist, visited_dist = routing(start, goal, cost_type="distance", a_star=False)
 
     # store the predecessor lists (prelist.txt from the lecture slides)
     save_prelist(f'prelist_time_{goal}.txt', pre_time)
@@ -310,10 +343,14 @@ plt.close()
 print('\nDijkstra vs. A*')
 
 for name, goal in targets.items():
+
+    # Dijkstra
     t0 = time.perf_counter()
-    pre_dij, cost_dij, visited_dij = routing(start, goal, "distance", a_star=False)
+    pre_dij, cost_dij, visited_dij = routing(start, goal, cost_type="distance", a_star=False)
     t1 = time.perf_counter()
-    pre_ast, cost_ast, visited_ast = routing(start, goal, "distance", a_star=True)
+
+    # A*
+    pre_ast, cost_ast, visited_ast = routing(start, goal, cost_type="distance", a_star=True)
     t2 = time.perf_counter()
 
     path_dij = get_path(pre_dij, start, goal)
