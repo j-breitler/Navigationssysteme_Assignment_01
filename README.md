@@ -7,15 +7,28 @@ Group: Breitler, Stering
 
 ## Contents
 
+```
+Assigment_01_BREITLER_STERING.py   the program (Task 1 + Task 2.2)
+README.md, requirements.txt
+data/          the street network of Graz (input)
+results/       output of the program: route plots + prelists/ (predecessor lists)
+slide_plots/   extra figures for the presentation + the two scripts that create them
+docs/          plan, data explanation, step-by-step guide, video script
+material/      assignment PDF and lecture slides
+```
+
 | File | Description |
 |---|---|
 | `Assigment_01_BREITLER_STERING.py` | The program: loads the data, finds the start node, runs Dijkstra and A*, saves the predecessor lists and plots |
-| `00_PLAN.md` | Overall plan and what has to be handed in |
-| `01_DATA_EXPLAINED.md` | How the three data files work |
-| `02_PROGRAM_STEP_BY_STEP.md` | The program, step by step |
 | `data/nodepl.txt` | Coordinates (lat, lon) of every node |
 | `data/nodelist.txt` | For every node the row in `arclist.txt` where its arcs start |
 | `data/arclist.txt` | The arcs: destination, travel time [h], length [km], speed limit, class, flags |
+| `slide_plots/plot_background.py` | Street network only (no text), as background images for the slides |
+| `slide_plots/plot_slides.py` | Figures for the video: start node, road classes, A* heuristic, visited nodes |
+| `docs/00_PLAN.md` | Overall plan and what has to be handed in |
+| `docs/01_DATA_EXPLAINED.md` | How the three data files work |
+| `docs/02_PROGRAM_STEP_BY_STEP.md` | The program, step by step |
+| `docs/03_Video_Script.md` | Script for the presentation video |
 
 ## What the program does
 
@@ -30,9 +43,14 @@ Group: Breitler, Stering
 
 ## Output
 
-- `prelist_time_<node>.txt`, `prelist_distance_<node>.txt` – predecessor lists (row = node id, value = predecessor, 0 = none)
-- `dijkstra_time_distance.png` – all routes, time (solid) vs. distance (dashed)
-- `dijkstra_vs_astar_<node>.png` – searched streets of Dijkstra vs. A* for each target
+The program writes into the folder `results/` (run it from the project folder, the output paths are relative):
+
+- `results/prelists/prelist_time_<node>.txt`, `results/prelists/prelist_distance_<node>.txt` – predecessor lists (row = node id, value = predecessor, 0 = none)
+- `results/dijkstra_time_distance.png` – all routes, time (solid) vs. distance (dashed)
+- `results/dijkstra_vs_astar_<node>.png` – searched streets of Dijkstra vs. A* for each target
+
+The slide figures are created with `python slide_plots/plot_background.py` and `python slide_plots/plot_slides.py`
+(these two find the data and save their images on their own, from any folder).
 
 ## Results
 

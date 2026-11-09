@@ -312,8 +312,8 @@ for name, goal in targets.items():
     pre_dist, cost_dist, visited_dist = routing(start, goal, cost_type="distance", a_star=False)
 
     # store the predecessor lists (prelist.txt from the lecture slides)
-    save_prelist(f'prelist_time_{goal}.txt', pre_time)
-    save_prelist(f'prelist_distance_{goal}.txt', pre_dist)
+    save_prelist(f'results/prelists/prelist_time_{goal}.txt', pre_time)
+    save_prelist(f'results/prelists/prelist_distance_{goal}.txt', pre_dist)
 
     path_time = get_path(pre_time, start, goal)
     path_dist = get_path(pre_dist, start, goal)
@@ -332,7 +332,7 @@ for name, goal in targets.items():
 
 plt.plot(coordinates[start][1], coordinates[start][0], "k*", markersize=15, label="Start")
 finish_plot("Dijkstra: time (solid) vs. distance (dashed)")
-plt.savefig("dijkstra_time_distance.png", dpi=200)
+plt.savefig("results/dijkstra_time_distance.png", dpi=200)
 plt.close()
 
 
@@ -376,7 +376,7 @@ for name, goal in targets.items():
         finish_plot(f'{algorithm} - {len(visited)} visited nodes')
 
     plt.tight_layout()
-    plt.savefig(f'dijkstra_vs_astar_{goal}.png', dpi=200)
+    plt.savefig(f'results/dijkstra_vs_astar_{goal}.png', dpi=200)
     plt.close()
 
-print('\nDone! The plots are saved as .png files.')
+print('\nDone! The plots and predecessor lists are saved in the folder results/.')

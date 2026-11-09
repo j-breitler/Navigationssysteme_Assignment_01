@@ -412,7 +412,7 @@ for node in range(1, number_of_nodes + 1):
      pre_dist, cost_dist, visited_dist = routing(start, goal, cost_type="distance", a_star=False)
      ```
      **Named arguments** (`cost_type=...`, `a_star=...`): the call says exactly what it does, which cost and which algorithm. For Python the result is the same as without the names.
-   - `save_prelist(...)` → `prelist_time_<goal>.txt` and `prelist_distance_<goal>.txt` (6 files in total).
+   - `save_prelist(...)` → `results/prelists/prelist_time_<goal>.txt` and `results/prelists/prelist_distance_<goal>.txt` (6 files in total). The paths are relative, so the script has to be started from the project folder.
    - `get_path(...)` → both routes as node lists.
    - `path_time_and_distance(...)` → time **and** length of both routes, so each route can be judged by both measures.
    - `print` with **format specs**: `{dist_t:.2f}` = 2 decimal places, `{time_t * 60:.1f}` = hours → minutes with 1 decimal place.
@@ -420,7 +420,7 @@ for node in range(1, number_of_nodes + 1):
    - `plt.plot(lon, lat, "ko")` – the **format string** `"ko"`: `k` = black, `o` = circle marker. It marks the target.
    - **`plt.text(x, y, text)`** – writes the target name next to the marker.
 4. After the loop: start marker `"k*"` (black star, `markersize=15`), then `finish_plot(...)`.
-5. **`plt.savefig("dijkstra_time_distance.png", dpi=200)`** – saves the figure. `dpi` = resolution.
+5. **`plt.savefig("results/dijkstra_time_distance.png", dpi=200)`** – saves the figure. `dpi` = resolution.
 6. **`plt.close()`** – closes the figure and frees its memory, so the next plot starts empty.
 
 Results:
@@ -458,7 +458,7 @@ Again one loop pass per target (`for name, goal in targets.items():`).
    - **`plt.subplot(1, 2, i + 1)`** – 1 row, 2 columns, panel number `i + 1` (subplot numbers start at 1).
    - In each panel: `plot_streets()` → `plot_search_tree(...)` in light blue → `plot_path(...)` in red → start and goal markers → `finish_plot(...)` with the number of visited nodes in the title.
    - **`plt.tight_layout()`** – adjusts the spacing so that the two panels and their labels don't overlap.
-   - `plt.savefig(f'dijkstra_vs_astar_{goal}.png', dpi=200)` and `plt.close()`.
+   - `plt.savefig(f'results/dijkstra_vs_astar_{goal}.png', dpi=200)` and `plt.close()`.
 
 Results:
 
